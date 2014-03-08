@@ -3,6 +3,8 @@
 
     <string name="app_name">MMS2Email</string>
     <string name="hello_world">Hello world!</string>
-    <string name="action_settings">Settings</string>
+    <string name="action_settings">Settings</string><string name="status_title">현재 상태</string><string name="service_status">서비스 상태</string>
+    <string name="item_title_send_mail">보내는 메일 주소</string>
+    <string name="item_title_receive_mail">받는 메일 주소</string>
 
 </resources>

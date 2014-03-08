@@ -1,6 +1,6 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context="com.studioY.mms2email.MainActivity" >
+    tools:context="com.studioY.mms2email.MMS2EmailMainActivity" >
     
     <item android:id="@+id/action_settings"
         android:title="@string/action_settings"
