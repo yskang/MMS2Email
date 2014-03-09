@@ -4,9 +4,11 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
 import android.app.Dialog;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -29,6 +31,29 @@ public class MMS2EmailMainActivity extends Activity implements AdapterView.OnIte
     private RelativeLayout receiverEmailSettingView;
     private AppPreference appPreference;
     private Switch mmsMonitorSwitch;
+
+    private BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if(intent.getAction().equals(Commons.COM_STUDIO_Y_MMS2EMAIL_SERVICE_RUNS_OK)){
+                mmsMonitorSwitch.setChecked(true);
+            }
+        }
+    };
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(Commons.COM_STUDIO_Y_MMS2EMAIL_SERVICE_RUNS_OK);
+        registerReceiver(broadcastReceiver, intentFilter);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        unregisterReceiver(broadcastReceiver);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,15 +78,21 @@ public class MMS2EmailMainActivity extends Activity implements AdapterView.OnIte
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if(isChecked){
-                    Intent intent = new Intent(getBaseContext(), MMSMonitorService.class);
+                    Intent intent = new Intent(Commons.COM_STUDIO_Y_MMS2EMAIL_START_MMSMONITOR);
                     startService(intent);
                 }else{
-                    Intent intent = new Intent(getBaseContext(), MMSMonitorService.class);
+                    Intent intent = new Intent(Commons.COM_STUDIO_Y_MMS2EMAIL_START_MMSMONITOR);
                     stopService(intent);
                 }
-
             }
         });
+
+        sendMMSMonitorCheckIntent();
+    }
+
+    private void sendMMSMonitorCheckIntent() {
+        Intent intent = new Intent(Commons.COM_STUDIO_Y_MMS2EMAIL_CHECK_MMSMONITOR);
+        sendBroadcast(intent);
     }
 
     @Override
@@ -96,13 +127,22 @@ public class MMS2EmailMainActivity extends Activity implements AdapterView.OnIte
     private Dialog makeSenderEmailSettingDialog(){
         Builder builder = new AlertDialog.Builder(this);
 
+        final EditText senderAddress = (EditText)senderEmailSettingView.findViewById(R.id.senderEmail);
+        final EditText senderPassword = (EditText)senderEmailSettingView.findViewById(R.id.senderEmailPassword);
+
+        if(!appPreference.getValue(Commons.SENDER_EMAIL_ADDRESS).equals("")){
+            senderAddress.setText(appPreference.getValue(Commons.SENDER_EMAIL_ADDRESS));
+        }
+
+        if(!appPreference.getValue(Commons.SENDER_EMAIL_PASSWORD).equals("")){
+            senderPassword.setText(appPreference.getValue(Commons.SENDER_EMAIL_PASSWORD));
+        }
+
         builder.setPositiveButton(R.string.positive,
                 new DialogInterface.OnClickListener() {
 
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        EditText senderAddress = (EditText)senderEmailSettingView.findViewById(R.id.senderEmail);
-                        EditText senderPassword = (EditText)senderEmailSettingView.findViewById(R.id.senderEmailPassword);
                         Log.d("yskang", "senderAddress : " + senderAddress);
                         appPreference.saveValue(Commons.SENDER_EMAIL_ADDRESS, senderAddress.getText().toString());
                         appPreference.saveValue(Commons.SENDER_EMAIL_PASSWORD, senderPassword.getText().toString());
@@ -126,12 +166,17 @@ public class MMS2EmailMainActivity extends Activity implements AdapterView.OnIte
     private Dialog makeReceiverEmailSettingDialog(){
         Builder builder = new AlertDialog.Builder(this);
 
+        final EditText receiverAddress = (EditText) receiverEmailSettingView.findViewById(R.id.receiverEmail);
+
+        if(!appPreference.getValue(Commons.RECEIVER_EMAIL_ADDRESS).equals("")){
+            receiverAddress.setText(appPreference.getValue(Commons.RECEIVER_EMAIL_ADDRESS));
+        }
+
         builder.setPositiveButton(R.string.positive,
                 new DialogInterface.OnClickListener() {
 
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        EditText receiverAddress = (EditText) receiverEmailSettingView.findViewById(R.id.receiverEmail);
                         appPreference.saveValue(Commons.RECEIVER_EMAIL_ADDRESS, receiverAddress.getText().toString());
                     }
                 });

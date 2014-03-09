@@ -10,5 +10,10 @@
     <string name="negative">Cancel</string>
     <string name="senderDialogTitle">보내는 메일 설정</string>
     <string name="receiverDialogTitle">받는 메일 설정</string><string name="email_address">e-mail</string><string name="password_title"/><string name="password">password</string>
+    <string name="set_sender_email">보내는 메일 주소</string>
+    <string name="set_sender_password">보내는 메일 암호</string>
+    <string name="set_receiver_email">받는 메일 주소</string>
+    <string name="set_sender_email_info">터치 해서 보내는 메일을 설정 하세요</string>
+    <string name="set_receiver_email_info">터치 해서 받는 메일을 설정 하세요</string>
 
 </resources>

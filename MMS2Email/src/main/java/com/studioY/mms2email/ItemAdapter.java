@@ -12,9 +12,11 @@ import java.util.ArrayList;
 public class ItemAdapter extends BaseAdapter{
     private Context context;
     private ArrayList<SettingItem> settingItemList = new ArrayList<SettingItem>();
+    private AppPreference appPreference;
 
     public ItemAdapter(Context context) {
         this.context = context;
+        appPreference = new AppPreference(context);
         initSettingItemList();
     }
 
@@ -25,8 +27,17 @@ public class ItemAdapter extends BaseAdapter{
         settingItemList.get(0).setTitle(context.getString(R.string.item_title_send_mail));
         settingItemList.get(1).setTitle(context.getString(R.string.item_title_receive_mail));
 
-        settingItemList.get(0).setAddress("unpaidfee@gmail.com");
-        settingItemList.get(1).setAddress("unpaidfee@gmail.com");
+        if(appPreference.getValue(Commons.SENDER_EMAIL_ADDRESS).equals("")){
+            settingItemList.get(0).setAddress(context.getString(R.string.set_sender_email_info));
+        }else{
+            settingItemList.get(0).setAddress(appPreference.getValue(Commons.SENDER_EMAIL_ADDRESS));
+        }
+
+        if(appPreference.getValue(Commons.RECEIVER_EMAIL_ADDRESS).equals("")){
+            settingItemList.get(1).setAddress(context.getString(R.string.set_receiver_email_info));
+        }else {
+            settingItemList.get(1).setAddress(appPreference.getValue(Commons.RECEIVER_EMAIL_ADDRESS));
+        }
     }
 
     public class ItemListViewHolder{
