@@ -24,4 +24,5 @@ dependencies {
     compile files('libs/additionnal.jar')
     compile files('libs/mail.jar')
     compile 'com.android.support:support-v4:+'
+    compile 'net.htmlparser.jericho:jericho-html:3.3@jar'
 }
