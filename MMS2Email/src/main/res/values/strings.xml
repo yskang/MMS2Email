@@ -22,5 +22,7 @@
     <string name="set_receiver_email_info">Touch to set receiver e-mail config</string>
     <string name="notification_title">MMS forwarding service has started</string>
     <string name="notification_description">MMS forwarding to specific e-mail address automatically when receive MMS.</string>
+    <string name="service_has_started">MMS monitor service has been started.</string>
+    <string name="service_has_stopped">MMS monitor service has been stopped.</string>
 
 </resources>

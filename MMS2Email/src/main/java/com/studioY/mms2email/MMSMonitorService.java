@@ -11,6 +11,7 @@ import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
+import android.widget.Toast;
 
 
 public class MMSMonitorService extends Service {
@@ -41,8 +42,6 @@ public class MMSMonitorService extends Service {
                 .setSmallIcon(R.drawable.ic_launcher)
                 .setContentTitle(getString(R.string.notification_title))
                 .setContentText(getString(R.string.notification_description));
-//                .setContentTitle("MMS 전달 서비스 실행중")
-//                .setContentText("MMS가 수신 되면 지정된 e-mail 주소로 전송됩니다.");
 
         Intent resultIntent = new Intent(this, MMS2EmailMainActivity.class);
 
@@ -61,6 +60,9 @@ public class MMSMonitorService extends Service {
         mmsMonitor = new MMSMonitor(this);
         mmsMonitor.startMMSMonitoring();
 
+        Toast toast = Toast.makeText(this, R.string.service_has_started, Toast.LENGTH_SHORT);
+        toast.show();
+
         return START_STICKY;
     }
 
@@ -70,6 +72,10 @@ public class MMSMonitorService extends Service {
 
         mmsMonitor.stopMMSMonitoring();
         unregisterReceiver(broadcastReceiver);
+
+        Toast toast = Toast.makeText(this, R.string.service_has_stopped, Toast.LENGTH_SHORT);
+        toast.show();
+
         super.onDestroy();
     }
 }
