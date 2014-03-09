@@ -8,18 +8,15 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Handler;
-import android.os.Message;
 import android.util.Log;
 
 import net.htmlparser.jericho.Source;
 
-import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.text.MessageFormat;
 
@@ -30,7 +27,10 @@ public class MMSMonitor {
     private ContentResolver contentResolver = null;
     private Handler mmshandler = null;
     private ContentObserver mmsObserver = null;
+    private int tryCount = 0;
+    private Bitmap bitmap;
     public boolean monitorStatus = false;
+    private int lastId = 0;
     int mmsCount = 0;
     AppPreference appPreference;
 
@@ -92,199 +92,219 @@ public class MMSMonitor {
 
                         // Getting the mms count
                         Uri uriMMSURI = Uri.parse("content://mms/");
-                        Cursor mmsCur = context.getContentResolver().query(uriMMSURI, null, "msg_box = 4 or msg_box = 1", null,"_id");
+                        Cursor mmsCursor = context.getContentResolver().query(uriMMSURI, null, "msg_box = 4 or msg_box = 1", null,"_id");
 
-                        if (mmsCur != null && mmsCur.getCount() > 0) {
-                            currMMSCount = mmsCur.getCount();
+                        if (mmsCursor != null && mmsCursor.getCount() > 0) {
+                            currMMSCount = mmsCursor.getCount();
                         }
 
-                        if(mmsCur == null){
-                            Log("", "MMSMonitor :: mmsCur is null" );
-                        }else{
-                            Log("", "MMSMonitor :: mmsCur is not null, currMMSCount : " + currMMSCount + ", mmsCount : " + mmsCount );
+                        Log.d("yskang", "currMMSCount: " + currMMSCount + ", mmsCount: " + mmsCount);
+
+                        String message = "";
+                        String direction;
+
+                        mmsCount = currMMSCount;
+                        mmsCursor.moveToLast();
+
+                        // get id , subject
+                        String subject = mmsCursor.getString(mmsCursor.getColumnIndex("sub"));
+                        int id = Integer.parseInt(mmsCursor.getString(mmsCursor.getColumnIndex("_id")));
+                        Log("", "MMSMonitor :: _id  == " + id);
+                        Log("", "MMSMonitor :: Subject == " + subject);
+
+                        direction = getDirection(mmsCursor);
+                        String senderPhoneNumber = getSenderNumber(id);
+
+                        // Get Parts
+                        Uri uriMMSPart = Uri.parse("content://mms/part");
+                        Cursor currentPartCursor = context.getContentResolver()
+                                .query(uriMMSPart, null, "mid = " + id,   null, "_id");
+                        Log("", "MMSMonitor :: parts records length == " + currentPartCursor.getCount());
+
+                        if(currentPartCursor.getCount() == 0 && senderPhoneNumber == null && tryCount < 5){
+                            tryCount++;
+                            try {
+                                Thread.sleep(10000);
+                                onChange(true);
+                            } catch (InterruptedException e1) {
+                                e1.printStackTrace();
+                            }
                         }
+                        tryCount = 0;
 
-                        if (currMMSCount >= mmsCount) {
-                            String message = "";
-                            String direction;
-                            String bodyString = "";
-
-                            mmsCount = currMMSCount;
-                            mmsCur.moveToLast();
-
-                            // get id , subject
-                            String subject = mmsCur.getString(mmsCur.getColumnIndex("sub"));
-                            int id = Integer.parseInt(mmsCur.getString(mmsCur.getColumnIndex("_id")));
-                            Log("", "MMSMonitor :: _id  == " + id);
-                            Log("", "MMSMonitor :: Subject == " + subject);
-
-                            // GET DIRECTION
-                            int type = Integer.parseInt(mmsCur.getString(mmsCur.getColumnIndex("m_type")));
-                            if (type == 128) {
-                                direction = OUTGOING_MMS;
-                                Log("", "MMSMonitor :: Type == Outgoing MMS");
-                            } else {
-                                direction = INCOMING_MMS;
-                                Log("", "MMSMonitor :: Type == Incoming MMS");
-                            }
-
-                            // Get Sender
-                            String selectionAdd = new String("msg_id=" + id);
-                            String uriStr = MessageFormat.format("content://mms/{0}/addr", id);
-                            Uri uriAddress = Uri.parse(uriStr);
-                            Cursor cAdd = context.getContentResolver().query(uriAddress, null,
-                                    selectionAdd, null, null);
-                            String senderAddr = null;
-                            if (cAdd.moveToFirst()) {
-                                do {
-                                    String number = cAdd.getString(cAdd.getColumnIndex("address"));
-                                    if (number != null) {
-                                        try {
-                                            Long.parseLong(number.replace("-", ""));
-                                            senderAddr = number;
-                                        } catch (NumberFormatException nfe) {
-                                            if (senderAddr == null) {
-                                                senderAddr = number;
-                                            }
-                                        }
-                                    }
-                                } while (cAdd.moveToNext());
-                            }
-                            if (cAdd != null) {
-                                cAdd.close();
-                            }
-
-                            // Get Parts
-                            Uri uriMMSPart = Uri.parse("content://mms/part");
-                            Cursor curPart = context.getContentResolver()
-                                    .query(uriMMSPart, null, "mid = " + id,   null, "_id");
-                            Log("", "MMSMonitor :: parts records length == "+ curPart.getCount());
-                            curPart.moveToLast();
+                        if (lastId != id) {
+                            currentPartCursor.moveToLast();
                             do {
-
                                 if(direction.equals(OUTGOING_MMS)){
                                     Log("", "outgoing mms, do nothing");
                                     break;
                                 }
-
-                                //String contentType = curPart.getString(3);
-                                //String partId = curPart.getString(0);
-                                String contentType = curPart.getString(curPart.getColumnIndex("ct"));
-                                String partId = curPart.getString(curPart.getColumnIndex("_id"));
+                                String contentType = currentPartCursor.getString(currentPartCursor.getColumnIndex("ct"));
+                                String partId = currentPartCursor.getString(currentPartCursor.getColumnIndex("_id"));
                                 Log("", "MMSMonitor :: partId == " + partId);
                                 Log("", "MMSMonitor :: part mime type == "+ contentType);
 
-                                // Get the message
-                                if (contentType.equalsIgnoreCase("text/html"))
-                                {
-                                    Log("","MMSMonitor :: ==== Get the html text message start ====");
-                                    byte[] messageData = readMMSPart(partId);
-                                    if (messageData != null && messageData.length > 0)
-                                        message = new String(messageData);
-
-                                    if(message == ""){
-                                        Cursor curPart1 = context.getContentResolver()
-                                                .query(uriMMSPart, null, "mid = " + id +
-                                                        " and _id =" + partId,null, "_id");
-                                        for (int i = 0; i < curPart1.getColumnCount(); i++)
-                                        {
-                                            Log("","MMSMonitor :: Column Name : " +
-                                                    curPart1.getColumnName(i));
-                                        }
-                                        curPart1.moveToLast();
-                                        message = curPart1.getString(13);
-                                        curPart1.close();
-                                    }
-                                    Log("","MMSMonitor :: Txt Message == " + message);
-
-                                    Source source = null;
-                                    String content = null;
-
-                                    try{
-                                        source = new Source(message);
-                                        source.fullSequentialParse();
-                                        content = source.getTextExtractor().toString();
-                                    }catch (Exception e){
-                                        e.printStackTrace();
-                                    }
-
-                                    message = content;
-                                    Log("", "MMSMonitor :: after parse == " + message);
+                                if (contentType.equalsIgnoreCase("text/html")){
+                                    message = getHTMLText(message, id, uriMMSPart, partId);
+                                }else if(contentType.equalsIgnoreCase("text/plain")){
+                                    message = getPlainText(message, id, uriMMSPart, partId);
                                 }
-
-                                // Get the message
-                                if (contentType.equalsIgnoreCase("text/plain"))
-                                {
-                                    Log("","MMSMonitor :: ==== Get the plain text message start ====");
-                                    byte[] messageData = readMMSPart(partId);
-                                    if (messageData != null && messageData.length > 0)
-                                        message = new String(messageData);
-
-                                    if(message == ""){
-                                        Cursor curPart1 = context.getContentResolver()
-                                                .query(uriMMSPart, null, "mid = " + id +
-                                                        " and _id =" + partId,null, "_id");
-                                        for (int i = 0; i < curPart1.getColumnCount(); i++)
-                                        {
-                                            Log("","MMSMonitor :: Column Name : " +
-                                                    curPart1.getColumnName(i));
-                                        }
-                                        curPart1.moveToLast();
-                                        message = curPart1.getString(13);
-                                        curPart1.close();
-                                    }
-                                    Log("","MMSMonitor :: Txt Message == " + message);
-                                }
-
-
-                                // Get X-param
-                                if (contentType.equalsIgnoreCase("text/X-param")) {
-                                    Log("","MMSMonitor :: ==== Get X-param start ====");
-                                    Log("","MMSMonitor :: X-param Message");
-                                }
-
-                                // Get Image
-                                if (isImageType(contentType) == true) {
-                                    Log("","MMSMonitor :: ==== Get the Image start ====");
-                                    Bitmap bitmap = getMmsImage(partId);
-
-                                    Log("", "MMSMonitor :: Image width : "+ bitmap.getWidth() + " height : " + bitmap.getHeight());
-
-                                    try{
-                                        String senderAddress = appPreference.getValue(Commons.SENDER_EMAIL_ADDRESS);
-                                        String senderPassword = appPreference.getValue(Commons.SENDER_EMAIL_PASSWORD);
-                                        String receiverAddress = appPreference.getValue(Commons.RECEIVER_EMAIL_ADDRESS);
-
-                                        Log.d("yskang", "Try to send Email using [[" + senderAddress + "]] [[" + senderPassword + "]] to [[" + receiverAddress + "]]" );
-
-                                        GMailSender sender = new GMailSender(senderAddress, senderPassword);
-
-                                        saveBitmapToFileCache(bitmap, context.getCacheDir().toString() + "/temp.jpg");
-
-                                        sender.addAttachment(context.getCacheDir().toString() + "/temp.jpg", message);
-                                        sender.sendMail(senderAddr, message, senderAddress, receiverAddress);
-
-                                    }catch (Exception e){
-                                        Log("", e.getMessage());
-                                    }
-                                }
-
-                            } while (curPart.moveToPrevious());
-
+                                getXParam(contentType);
+                                getImage(contentType, partId);
+                            } while (currentPartCursor.moveToPrevious());
+                            sendEmail(message, senderPhoneNumber);
+                            lastId = id;
                         }
+                        currentPartCursor.close();
+                        mmsCursor.close();
+
 
                     } catch (Exception e) {
                         Log("", "MMSMonitor Exception:: "+ e.getMessage());
-                        try {
-                            Thread.sleep(5000);
-                            onChange(true);
-                        } catch (InterruptedException e1) {
-                            e1.printStackTrace();
-                        }
                     }
                 }
             };
             thread.start();
+        }
+
+        private void sendEmail(String message, String senderPhoneNumber){
+                try{
+                    String senderAddress = appPreference.getValue(Commons.SENDER_EMAIL_ADDRESS);
+                    String senderPassword = appPreference.getValue(Commons.SENDER_EMAIL_PASSWORD);
+                    String receiverAddress = appPreference.getValue(Commons.RECEIVER_EMAIL_ADDRESS);
+
+                    Log.d("yskang", "Try to send Email using [[" + senderAddress + "]] [[" + senderPassword + "]] to [[" + receiverAddress + "]]");
+
+                    GMailSender sender = new GMailSender(senderAddress, senderPassword);
+
+                    if(bitmap != null){
+                        saveBitmapToFileCache(bitmap, context.getCacheDir().toString() + "/temp.jpg");
+                        sender.addAttachment(context.getCacheDir().toString() + "/temp.jpg", message);
+                    }
+
+                    sender.sendMail(senderPhoneNumber, message, senderAddress, receiverAddress);
+
+                }catch (Exception e){
+                    Log("", e.getMessage());
+                }
+        }
+
+        private void getImage(String contentType, String partId) {
+            if (isImageType(contentType) == true) {
+                Log("","MMSMonitor :: ==== Get the Image start ====");
+                bitmap = getMmsImage(partId);
+                Log("", "MMSMonitor :: Image width : "+ bitmap.getWidth() + " height : " + bitmap.getHeight());
+            }
+        }
+
+        private void getXParam(String contentType) {
+            // Get X-param
+            if (contentType.equalsIgnoreCase("text/X-param")) {
+                Log("","MMSMonitor :: ==== Get X-param start ====");
+                Log("","MMSMonitor :: X-param Message");
+            }
+        }
+
+        private String getPlainText(String message, int id, Uri uriMMSPart, String partId) {
+            Log("","MMSMonitor :: ==== Get the plain text message start ====");
+            byte[] messageData = readMMSPart(partId);
+            if (messageData != null && messageData.length > 0)
+                message = new String(messageData);
+
+            if(message == ""){
+                Cursor curPart1 = context.getContentResolver()
+                        .query(uriMMSPart, null, "mid = " + id +
+                                " and _id =" + partId, null, "_id");
+                for (int i = 0; i < curPart1.getColumnCount(); i++)
+                {
+                    Log("","MMSMonitor :: Column Name : " +
+                            curPart1.getColumnName(i));
+                }
+                curPart1.moveToLast();
+                message = curPart1.getString(13);
+                curPart1.close();
+            }
+            Log("","MMSMonitor :: Txt Message == " + message);
+            return message;
+        }
+
+        private String getHTMLText(String message, int id, Uri uriMMSPart, String partId) {
+            Log("","MMSMonitor :: ==== Get the html text message start ====");
+            byte[] messageData = readMMSPart(partId);
+            if (messageData != null && messageData.length > 0)
+                message = new String(messageData);
+
+            if(message == "") {
+                Cursor curPart1 = context.getContentResolver()
+                        .query(uriMMSPart, null, "mid = " + id +
+                                " and _id =" + partId, null, "_id");
+                for (int i = 0; i < curPart1.getColumnCount(); i++) {
+                    Log("", "MMSMonitor :: Column Name : " +
+                            curPart1.getColumnName(i));
+                }
+                curPart1.moveToLast();
+                message = curPart1.getString(13);
+                curPart1.close();
+            }
+            Log("","MMSMonitor :: Txt Message == " + message);
+
+            Source source;
+            String content = null;
+
+            try{
+                source = new Source(message);
+                source.fullSequentialParse();
+                content = source.getTextExtractor().toString();
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+
+            message = content;
+            Log("", "MMSMonitor :: after parse == " + message);
+
+            return message;
+        }
+
+        private String getSenderNumber(int id) {
+            // Get Sender
+            String selectionAdd = new String("msg_id=" + id);
+            String uriStr = MessageFormat.format("content://mms/{0}/addr", id);
+            Uri uriAddress = Uri.parse(uriStr);
+            Cursor cAdd = context.getContentResolver().query(uriAddress, null,
+                    selectionAdd, null, null);
+            String senderAddr = null;
+            if (cAdd.moveToFirst()) {
+                do {
+                    String number = cAdd.getString(cAdd.getColumnIndex("address"));
+                    if (number != null) {
+                        try {
+                            Long.parseLong(number.replace("-", ""));
+                            senderAddr = number;
+                        } catch (NumberFormatException nfe) {
+                            if (senderAddr == null) {
+                                senderAddr = number;
+                            }
+                        }
+                    }
+                } while (cAdd.moveToNext());
+            }
+            if (cAdd != null) {
+                cAdd.close();
+            }
+            return senderAddr;
+        }
+
+        private String getDirection(Cursor mmsCur) {
+            String direction;// GET DIRECTION
+            int type = Integer.parseInt(mmsCur.getString(mmsCur.getColumnIndex("m_type")));
+            if (type == 128) {
+                direction = OUTGOING_MMS;
+                Log("", "MMSMonitor :: Type == Outgoing MMS");
+            } else {
+                direction = INCOMING_MMS;
+                Log("", "MMSMonitor :: Type == Incoming MMS");
+            }
+            return direction;
         }
     }
 
