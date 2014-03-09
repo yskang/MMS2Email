@@ -16,6 +16,8 @@ import android.widget.Toast;
 
 public class MMSMonitorService extends Service {
     private MMSMonitor mmsMonitor;
+    private AppPreference appPreference;
+
     private BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -37,6 +39,8 @@ public class MMSMonitorService extends Service {
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(Commons.COM_STUDIO_Y_MMS2EMAIL_CHECK_MMSMONITOR);
         registerReceiver(broadcastReceiver, intentFilter);
+
+        appPreference = new AppPreference(this);
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this)
                 .setSmallIcon(R.drawable.ic_launcher)
@@ -63,6 +67,8 @@ public class MMSMonitorService extends Service {
         Toast toast = Toast.makeText(this, R.string.service_has_started, Toast.LENGTH_SHORT);
         toast.show();
 
+        appPreference.saveValue(Commons.SERVICE_STATUS, Commons.SERVICE_ON);
+
         return START_STICKY;
     }
 
@@ -75,6 +81,8 @@ public class MMSMonitorService extends Service {
 
         Toast toast = Toast.makeText(this, R.string.service_has_stopped, Toast.LENGTH_SHORT);
         toast.show();
+
+        appPreference.saveValue(Commons.SERVICE_STATUS, Commons.SERVICE_OFF);
 
         super.onDestroy();
     }

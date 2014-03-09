@@ -3,7 +3,7 @@
 
     <string name="app_name">MMS2Email</string>
     <string name="hello_world">Hello world!</string>
-    <string name="action_settings">Settings</string><string name="status_title">현재 상태</string><string name="service_status">서비스 상태</string>
+    <string name="action_settings">정보</string><string name="status_title">현재 상태</string><string name="service_status">서비스 상태</string>
     <string name="item_title_send_mail">보내는 메일 주소</string>
     <string name="item_title_receive_mail">받는 메일 주소</string>
     <string name="positive">확인</string>
@@ -19,5 +19,7 @@
     <string name="notification_description">MMS가 수신 되면 지정된 e-mail 주소로 전송됩니다.</string>
     <string name="service_has_started">MMS 모니터 서비스가 시작 되었습니다.</string>
     <string name="service_has_stopped">MMS 모니터 서비스가 정지 되었습니다.</string>
+    <string name="application_info">어플리케이션 정보</string>
+    <string name="app_info_description">\nMMS 자동 email 전달 어플리케이션\n</string>
 
 </resources>

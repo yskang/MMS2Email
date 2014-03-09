@@ -27,6 +27,7 @@ public class MMS2EmailMainActivity extends Activity implements AdapterView.OnIte
     private ItemAdapter adapter;
     private Dialog senderEmailSettingDialog;
     private Dialog receiverEmailSettingDialog;
+    private Dialog applicationInfoDialog;
     private RelativeLayout senderEmailSettingView;
     private RelativeLayout receiverEmailSettingView;
     private AppPreference appPreference;
@@ -69,6 +70,7 @@ public class MMS2EmailMainActivity extends Activity implements AdapterView.OnIte
         receiverEmailSettingView = makeView(R.layout.receiver_email_setting);
         senderEmailSettingDialog = makeSenderEmailSettingDialog();
         receiverEmailSettingDialog = makeReceiverEmailSettingDialog();
+        applicationInfoDialog = makeApplicationInfoDialog();
 
         adapter = new ItemAdapter(this);
 
@@ -110,6 +112,7 @@ public class MMS2EmailMainActivity extends Activity implements AdapterView.OnIte
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         if (id == R.id.action_settings) {
+            applicationInfoDialog.show();
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -198,6 +201,17 @@ public class MMS2EmailMainActivity extends Activity implements AdapterView.OnIte
 
         builder.setView(receiverEmailSettingView);
         builder.setTitle(R.string.receiverDialogTitle);
+
+        return builder.create();
+    }
+
+
+    private Dialog makeApplicationInfoDialog() {
+        Builder builder = new Builder(this);
+
+        builder.setTitle(R.string.application_info);
+        builder.setMessage(R.string.app_info_description);
+        builder.setNeutralButton(R.string.positive, null);
 
         return builder.create();
     }
