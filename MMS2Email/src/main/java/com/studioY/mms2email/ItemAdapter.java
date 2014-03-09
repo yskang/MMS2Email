@@ -21,6 +21,8 @@ public class ItemAdapter extends BaseAdapter{
     }
 
     private void initSettingItemList() {
+        settingItemList.clear();
+
         settingItemList.add(new SettingItem());
         settingItemList.add(new SettingItem());
 
@@ -38,6 +40,11 @@ public class ItemAdapter extends BaseAdapter{
         }else {
             settingItemList.get(1).setAddress(appPreference.getValue(Commons.RECEIVER_EMAIL_ADDRESS));
         }
+    }
+
+    public void updateList() {
+        initSettingItemList();
+        notifyDataSetChanged();
     }
 
     public class ItemListViewHolder{
@@ -81,6 +88,11 @@ public class ItemAdapter extends BaseAdapter{
 
         ItemListViewHolder itemListViewHolder = (ItemListViewHolder) view.getTag();
 
+        itemListViewHolder.addressText = (TextView) view.findViewById(R.id.itemContents);
+        itemListViewHolder.addressText.setText(getItem(position).getAddress());
+
         return view;
     }
+
+
 }

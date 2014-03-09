@@ -146,6 +146,7 @@ public class MMS2EmailMainActivity extends Activity implements AdapterView.OnIte
                         Log.d("yskang", "senderAddress : " + senderAddress);
                         appPreference.saveValue(Commons.SENDER_EMAIL_ADDRESS, senderAddress.getText().toString());
                         appPreference.saveValue(Commons.SENDER_EMAIL_PASSWORD, senderPassword.getText().toString());
+                        adapter.updateList();
                     }
                 });
 
@@ -178,6 +179,7 @@ public class MMS2EmailMainActivity extends Activity implements AdapterView.OnIte
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         appPreference.saveValue(Commons.RECEIVER_EMAIL_ADDRESS, receiverAddress.getText().toString());
+                        adapter.notifyDataSetChanged();
                     }
                 });
 

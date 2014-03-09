@@ -20,6 +20,7 @@
         android:inputType="textEmailAddress"
         android:ems="10"
         android:hint="@string/set_receiver_email"
+        android:selectAllOnFocus="true"
         android:id="@id/receiverEmail"
         android:layout_alignParentTop="true"
         android:layout_alignParentRight="true"
