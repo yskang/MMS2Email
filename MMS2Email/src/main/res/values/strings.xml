@@ -3,17 +3,24 @@
 
     <string name="app_name">MMS2Email</string>
     <string name="hello_world">Hello world!</string>
-    <string name="action_settings">Settings</string><string name="status_title">현재 상태</string><string name="service_status">서비스 상태</string>
-    <string name="item_title_send_mail">보내는 메일 주소</string>
-    <string name="item_title_receive_mail">받는 메일 주소</string>
+    <string name="action_settings">Settings</string>
+    <string name="status_title">Status</string>
+    <string name="service_status">Service Status</string>
+    <string name="item_title_send_mail">Sender e-mail address</string>
+    <string name="item_title_receive_mail">Receiver e-mail address</string>
     <string name="positive">OK</string>
     <string name="negative">Cancel</string>
-    <string name="senderDialogTitle">보내는 메일 설정</string>
-    <string name="receiverDialogTitle">받는 메일 설정</string><string name="email_address">e-mail</string><string name="password_title"/><string name="password">password</string>
-    <string name="set_sender_email">보내는 메일 주소</string>
-    <string name="set_sender_password">보내는 메일 암호</string>
-    <string name="set_receiver_email">받는 메일 주소</string>
-    <string name="set_sender_email_info">터치 해서 보내는 메일을 설정 하세요</string>
-    <string name="set_receiver_email_info">터치 해서 받는 메일을 설정 하세요</string>
+    <string name="senderDialogTitle">Sender e-mail setting</string>
+    <string name="receiverDialogTitle">Receiver e-mail setting</string>
+    <string name="email_address">e-mail</string>
+    <string name="password_title"/>
+    <string name="password">password</string>
+    <string name="set_sender_email">sender e-mail</string>
+    <string name="set_sender_password">sender password</string>
+    <string name="set_receiver_email">receiver e-mail</string>
+    <string name="set_sender_email_info">Touch to set sender e-mail config</string>
+    <string name="set_receiver_email_info">Touch to set receiver e-mail config</string>
+    <string name="notification_title">MMS forwarding service has started</string>
+    <string name="notification_description">MMS forwarding to specific e-mail address automatically when receive MMS.</string>
 
 </resources>

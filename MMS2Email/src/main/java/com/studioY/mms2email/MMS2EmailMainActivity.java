@@ -31,12 +31,15 @@ public class MMS2EmailMainActivity extends Activity implements AdapterView.OnIte
     private RelativeLayout receiverEmailSettingView;
     private AppPreference appPreference;
     private Switch mmsMonitorSwitch;
+    private boolean automated = false;
 
     private BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             if(intent.getAction().equals(Commons.COM_STUDIO_Y_MMS2EMAIL_SERVICE_RUNS_OK)){
+                automated = true;
                 mmsMonitorSwitch.setChecked(true);
+                automated = false;
             }
         }
     };
@@ -77,6 +80,7 @@ public class MMS2EmailMainActivity extends Activity implements AdapterView.OnIte
         mmsMonitorSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+            if(automated == false){
                 if(isChecked){
                     Intent intent = new Intent(Commons.COM_STUDIO_Y_MMS2EMAIL_START_MMSMONITOR);
                     startService(intent);
@@ -84,6 +88,7 @@ public class MMS2EmailMainActivity extends Activity implements AdapterView.OnIte
                     Intent intent = new Intent(Commons.COM_STUDIO_Y_MMS2EMAIL_START_MMSMONITOR);
                     stopService(intent);
                 }
+            }
             }
         });
 

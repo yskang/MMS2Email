@@ -37,13 +37,12 @@ public class MMSMonitorService extends Service {
         intentFilter.addAction(Commons.COM_STUDIO_Y_MMS2EMAIL_CHECK_MMSMONITOR);
         registerReceiver(broadcastReceiver, intentFilter);
 
-//        Notification notification = new Notification(R.drawable.ic_launcher, "MMS 전달 서비스", System.currentTimeMillis());
-//        notification.setLatestEventInfo(getApplicationContext(), "MMS 전달 서비스", "MMS가 수신되면 지정된 e-mail로 전송됩니다.", null);
-
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this)
                 .setSmallIcon(R.drawable.ic_launcher)
-                .setContentTitle("MMS 전달 서비스 실행중")
-                .setContentText("MMS가 수신 되면 지정된 e-mail 주소로 전송됩니다.");
+                .setContentTitle(getString(R.string.notification_title))
+                .setContentText(getString(R.string.notification_description));
+//                .setContentTitle("MMS 전달 서비스 실행중")
+//                .setContentText("MMS가 수신 되면 지정된 e-mail 주소로 전송됩니다.");
 
         Intent resultIntent = new Intent(this, MMS2EmailMainActivity.class);
 
@@ -62,7 +61,7 @@ public class MMSMonitorService extends Service {
         mmsMonitor = new MMSMonitor(this);
         mmsMonitor.startMMSMonitoring();
 
-        return super.onStartCommand(intent, flags, startId);
+        return START_STICKY;
     }
 
     @Override
