@@ -175,7 +175,7 @@ public class MMSMonitor {
 
                     Log.d("yskang", "Try to send Email using [[" + senderAddress + "]] [[" + senderPassword + "]] to [[" + receiverAddress + "]]");
 
-                    GMailSender sender = new GMailSender(senderAddress, senderPassword);
+                    MailSender sender = new MailSender(senderAddress, senderPassword);
 
                     if(bitmap != null){
                         saveBitmapToFileCache(bitmap, context.getCacheDir().toString() + "/temp.jpg");

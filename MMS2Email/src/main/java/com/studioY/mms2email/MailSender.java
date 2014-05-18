@@ -1,9 +1,12 @@
 package com.studioY.mms2email;
 
 
+import android.util.Log;
+
 import javax.activation.DataHandler;
 import javax.activation.DataSource;
 import javax.activation.FileDataSource;
+import javax.mail.Authenticator;
 import javax.mail.BodyPart;
 import javax.mail.Message;
 import javax.mail.Multipart;
@@ -22,42 +25,77 @@ import java.io.OutputStream;
 import java.security.Security;
 import java.util.Properties;
 
-public class GMailSender extends javax.mail.Authenticator {
-    private String mailhost = "smtp.gmail.com";
+public class MailSender {
     private String user;
     private String password;
     private Session session;
-    private Multipart _multipart;
+    private Multipart multipart;
+
+    MyAuthenticator authenticator;
 
     static {
         Security.addProvider(new com.studioY.mms2email.JSSEProvider());
     }
 
-    public GMailSender(String user, String password) {
+    public MailSender(String user, String password) {
+        Log.d("MailSender", "MailSender is created, user : "+ user + ", password : " + password);
+
         this.user = user;
         this.password = password;
 
+        this.authenticator = new MyAuthenticator(user, password);
+
+        String mailHost = String.format("smtp.%s", user.split("@")[1]);
+        Log.d("MailSender", "mailHost : " + mailHost);
+
+        Log.d("MailSender", "Naver");
         Properties props = new Properties();
-        props.setProperty("mail.transport.protocol", "smtp");
-        props.setProperty("mail.host", mailhost);
-        props.put("mail.smtp.auth", "true");
-        props.put("mail.smtp.port", "465");
-        props.put("mail.smtp.socketFactory.port", "465");
-        props.put("mail.smtp.socketFactory.class",
-                "javax.net.ssl.SSLSocketFactory");
-        props.put("mail.smtp.socketFactory.fallback", "false");
-        props.setProperty("mail.smtp.quitwait", "false");
+        if(mailHost.equals("smtp.naver.com")){
+            props.put("mail.smtp.user", user);
+            props.put("mail.smtp.host", "smtp.naver.com");
+            props.put("mail.smtp.port", "465");
+//            props.put("mail.smtp.starttls.enable", "true");
+            props.put("mail.smtp.auth", "true");
+            props.put("mail.smtp.debug", "true");
+            props.put("mail.smtp.socketFactory.port", "465");
+            props.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
+            props.put("mail.smtp.socketFactory.fallback", "false");
 
-        session = Session.getDefaultInstance(props, this);
+            session = Session.getDefaultInstance(props, authenticator);
+        }else{
+            props.setProperty("mail.transport.protocol", "smtp");
+            props.setProperty("mail.host", mailHost);
+            props.put("mail.smtp.auth", "true");
+            props.put("mail.smtp.port", "465");
+            props.put("mail.smtp.socketFactory.port", "465");
+            props.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
+            props.put("mail.smtp.socketFactory.fallback", "false");
+            props.setProperty("mail.smtp.quitwait", "false");
+            session = Session.getDefaultInstance(props, authenticator);
+        }
 
-        _multipart = new MimeMultipart();
+
+        multipart = new MimeMultipart();
     }
 
-    protected PasswordAuthentication getPasswordAuthentication() {
-        return new PasswordAuthentication(user, password);
+    class MyAuthenticator extends Authenticator {
+        private String id;
+        private String pw;
+
+        public MyAuthenticator(String id, String pw) {
+            this.id = id;
+            this.pw = pw;
+        }
+
+        @Override
+        protected PasswordAuthentication getPasswordAuthentication() {
+            return new PasswordAuthentication(id, pw);
+        }
+
     }
 
     public synchronized void sendMail(String subject, String body, String sender, String recipients) throws Exception {
+        Log.d("MailSender", "SendMail requested, Subject : " + subject + ", body : " + body + ", sender : " + sender + ", recipients : " + recipients);
         try{
             MimeMessage message = new MimeMessage(session);
             DataHandler handler = new DataHandler(new ByteArrayDataSource(body.getBytes(), "text/plain"));
@@ -71,8 +109,8 @@ public class GMailSender extends javax.mail.Authenticator {
             else
                 message.setRecipient(Message.RecipientType.TO, new InternetAddress(recipients));
 
-            if(_multipart.getCount() > 0){
-                message.setContent(_multipart);
+            if(multipart.getCount() > 0){
+                message.setContent(multipart);
             }
 
             Transport.send(message);
@@ -127,12 +165,12 @@ public class GMailSender extends javax.mail.Authenticator {
         messageBodyPart.setDataHandler(new DataHandler(source));
         messageBodyPart.setFileName(filename);
 
-        _multipart.addBodyPart(messageBodyPart);
+        multipart.addBodyPart(messageBodyPart);
 
         BodyPart messageBodyPart2 = new MimeBodyPart();
         messageBodyPart2.setText(subject);
 
-        _multipart.addBodyPart(messageBodyPart2);
+        multipart.addBodyPart(messageBodyPart2);
     }
 
 }
