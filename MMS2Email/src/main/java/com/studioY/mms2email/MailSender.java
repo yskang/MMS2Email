@@ -48,7 +48,6 @@ public class MailSender {
         String mailHost = String.format("smtp.%s", user.split("@")[1]);
         Log.d("MailSender", "mailHost : " + mailHost);
 
-        Log.d("MailSender", "Naver");
         Properties props = new Properties();
         if(mailHost.equals("smtp.naver.com")){
             props.put("mail.smtp.user", user);

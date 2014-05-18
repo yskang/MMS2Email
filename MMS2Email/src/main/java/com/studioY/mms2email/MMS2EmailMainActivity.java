@@ -188,6 +188,7 @@ public class MMS2EmailMainActivity extends Activity implements AdapterView.OnIte
                     public void onClick(DialogInterface dialog, int which) {
                         appPreference.saveValue(Commons.RECEIVER_EMAIL_ADDRESS, receiverAddress.getText().toString());
                         adapter.notifyDataSetChanged();
+                        adapter.updateList();
                     }
                 });
 
