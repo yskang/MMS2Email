@@ -73,6 +73,7 @@ public class MMSMonitor {
 
 
     public void stopMMSMonitoring() {
+        Log.d("yskang", "---stopMMSMonitoring()---");
         try {
             monitorStatus = false;
             if (!monitorStatus){
@@ -113,6 +114,10 @@ public class MMSMonitor {
             if(mmsCount > currMMSCount){
                 Log.d("yskang", "some MMS has been deleted!!, Update mmsCount to current count");
                 mmsCount = currMMSCount;
+                mmsCursor.close();
+
+                stopMMSMonitoring();
+                startMMSMonitoring();
                 return;
             }
 
@@ -134,19 +139,25 @@ public class MMSMonitor {
                     .query(uriMMSPart, null, "mid = " + id, null, "_id");
             Log("", "MMSMonitor :: parts records length == " + currentPartCursor.getCount());
 
-            if(senderPhoneNumber == null){
+            if(senderPhoneNumber == null || currentPartCursor.getCount() == 0){
                 try {
+                    Log.d("yskang", String.format("no phone number or no payload, phone number : %s, payload count : %d", senderPhoneNumber, currentPartCursor.getCount()));
+                    Log.d("yskang", "wait for 1 sec");
                     Thread.sleep(1000);
-                    Log.d("yskang", "no sender number, Call OnChange()");
-                    onChange(true);
+                    Log.d("yskang", "try to get phone number and payload");
+                    senderPhoneNumber = getSenderNumber(id);
+                    Log.d("yskang", String.format("Chekc phone number, phone number : %s", senderPhoneNumber));
+                    currentPartCursor = context.getContentResolver().query(uriMMSPart, null, "mid = " + id, null, "_id");
+                    Log.d("yskang", String.format("check payload count, payload count : %d", currentPartCursor.getCount()));
                 } catch (InterruptedException e1) {
                     e1.printStackTrace();
                 }
             }
 
+
             int count = 0;
             if (lastSendId < id) {
-                Log.d("yskang", String.format("lastSendId: %d, id: %d", lastSendId, id));
+                Log.d("yskang", String.format("diff lastSendId: %d, id: %d", lastSendId, id));
                 currentPartCursor.moveToLast();
                 do {
                     if(direction.equals(OUTGOING_MMS)){
@@ -182,28 +193,28 @@ public class MMSMonitor {
         }
 
         private void sendEmail(String message, String senderPhoneNumber){
-                try{
-                    String senderAddress = appPreference.getValue(Commons.SENDER_EMAIL_ADDRESS);
-                    String senderPassword = appPreference.getValue(Commons.SENDER_EMAIL_PASSWORD);
-                    String receiverAddress = appPreference.getValue(Commons.RECEIVER_EMAIL_ADDRESS);
+            try{
+                String senderAddress = appPreference.getValue(Commons.SENDER_EMAIL_ADDRESS);
+                String senderPassword = appPreference.getValue(Commons.SENDER_EMAIL_PASSWORD);
+                String receiverAddress = appPreference.getValue(Commons.RECEIVER_EMAIL_ADDRESS);
 
-                    Log.d("yskang", "Try to send Email using [[" + senderAddress + "]] [[" + senderPassword + "]] to [[" + receiverAddress + "]]");
+                Log.d("yskang", "Try to send Email using [[" + senderAddress + "]] [[" + senderPassword + "]] to [[" + receiverAddress + "]]");
 
-                    MailSender sender = new MailSender(senderAddress, senderPassword);
+                MailSender sender = new MailSender(senderAddress, senderPassword);
 
-                    if(bitmapArrayList.size() != 0){
-                        for(int i = 0 ; i < bitmapArrayList.size() ; i++){
-                            saveBitmapToFileCache(bitmapArrayList.get(i), context.getCacheDir().toString() + String.format("/temp_%d.jpg", i));
-                            sender.addAttachment(context.getCacheDir().toString() + String.format("/temp_%d.jpg", i), message);
-                        }
+                if(bitmapArrayList.size() != 0){
+                    for(int i = 0 ; i < bitmapArrayList.size() ; i++){
+                        saveBitmapToFileCache(bitmapArrayList.get(i), context.getCacheDir().toString() + String.format("/temp_%d.jpg", i));
+                        sender.addAttachment(context.getCacheDir().toString() + String.format("/temp_%d.jpg", i), message);
                     }
-
-                    if(senderPhoneNumber != null)
-                        sender.sendMail(senderPhoneNumber, message, senderAddress, receiverAddress);
-
-                }catch (Exception e){
-                    Log("", e.getMessage());
                 }
+
+                if(senderPhoneNumber != null)
+                    sender.sendMail(senderPhoneNumber, message, senderAddress, receiverAddress);
+
+            }catch (Exception e){
+                Log("", e.getMessage());
+            }
         }
 
         private void getImage(String contentType, String partId) {
@@ -296,7 +307,7 @@ public class MMSMonitor {
                     String number = cAdd.getString(cAdd.getColumnIndex("address"));
                     if (number != null) {
                         try {
-                            Long.parseLong(number.replace("-", ""));
+//                            Long.parseLong(number.replace("-", ""));
                             senderAddr = number;
                         } catch (NumberFormatException nfe) {
                             if (senderAddr == null) {
